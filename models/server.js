@@ -9,7 +9,7 @@ class Server {
         this.app = express();
         this.port = process.env.PORT;
         this.userPath = "/api/users"
-
+        this.authPath = "/api/auth"
         // Database
         this.connectDatabase();
         // Middlewares
@@ -30,6 +30,7 @@ class Server {
     routes() {
 
         this.app.use(this.userPath, require('../routes/user.routes'));
+        this.app.use(this.authPath, require('../routes/auth.routes'));
 
         // 404
         this.app.get('*', (req, res) => {
