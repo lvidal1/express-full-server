@@ -1,45 +1,63 @@
 const { response, request } = require('express');
+const bcryptjs = require('bcryptjs');
 
-const userGet = (req = request, res = response) => {
+const User = require("../models/user");
 
-    const { q, page = 1 } = req.query
+const userGet = async (req = request, res = response) => {
+
+    const { limit = 5, from = 0 } = req.query
+    const query = { status: true }
+
+    const [total, usuarios] = await Promise.all([
+        User.countDocuments(query),
+        User.find(query)
+            .skip(Number(from))
+            .limit(Number(limit))
+    ])
 
     res.json({
-        msg: 'get API',
-        q,
-        page
+        total,
+        usuarios
     })
 }
 
-const userPost = (req, res = response) => {
+const userPost = async (req, res = response) => {
 
-    const { nombre, edad } = req.body;
+    const { name, email, password, role } = req.body;
+    const user = new User({ name, email, password, role });
+
+    // Encrypt password
+    const salt = bcryptjs.genSaltSync(10);
+    user.password = bcryptjs.hashSync(password, salt);
+
+    await user.save();
 
     res.status(201).json({
-        msg: 'post API',
-        nombre,
-        edad
+        user
     })
 }
 
-const userPut = (req, res = response) => {
+const userPut = async (req, res = response) => {
 
-    const id = req.params.id;
+    const { id } = req.params;
+    const { _id, password, google, email, ...rest } = req.body;
 
-    res.status(201).json({
-        msg: 'put API',
-        id
-    })
+    if (password) {
+        const salt = bcryptjs.genSaltSync(10);
+        resto.password = bcryptjs.hashSync(password, salt);
+    }
+
+    const user = await User.findByIdAndUpdate(id, rest);
+
+    res.status(201).json(user)
 }
 
-const userDelete = (req, res = response) => {
+const userDelete = async (req, res = response) => {
 
-    const id = req.params.id;
+    const { id } = req.params;
+    const user = await User.findByIdAndUpdate(id, { status: false });
 
-    res.status(201).json({
-        msg: 'delete API',
-        id
-    })
+    res.status(201).json(user)
 }
 
 module.exports = {
